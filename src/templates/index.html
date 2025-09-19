@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-6">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="display-6 fw-bold text-primary mb-3">
+                <i class="fas fa-cloud-upload-alt me-3"></i>
+                Upload Document
+            </h1>
+            <p class="lead text-muted">
+                Upload your documents for intelligent text extraction and categorization using AWS AI services.
+            </p>
+        </div>
+
+        <!-- Upload Form Card -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+                    <!-- File Upload Section -->
+                    <div class="mb-4">
+                        <label for="file" class="form-label fw-semibold">
+                            <i class="fas fa-file me-2"></i>Select Document
+                        </label>
+                        <div class="upload-area border-2 border-dashed border-secondary rounded-3 p-4 text-center" id="uploadArea">
+                            <div class="upload-content">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <p class="mb-2"><strong>Click to select file</strong> or drag and drop</p>
+                                <p class="text-muted small mb-3">
+                                    Supported formats: PDF, PNG, JPG, JPEG, TIFF
+                                </p>
+                                <input type="file" 
+                                       class="form-control d-none" 
+                                       id="file" 
+                                       name="file" 
+                                       accept=".pdf,.png,.jpg,.jpeg,.tiff"
+                                       required>
+                                <div class="selected-file d-none">
+                                    <div class="alert alert-light border">
+                                        <i class="fas fa-file-alt me-2"></i>
+                                        <span class="filename"></span>
+                                        <small class="file-size text-muted d-block"></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email Input -->
+                    <div class="mb-4">
+                        <label for="email" class="form-label fw-semibold">
+                            <i class="fas fa-envelope me-2"></i>Email Address
+                        </label>
+                        <input type="email" 
+                               class="form-control form-control-lg" 
+                               id="email" 
+                               name="email" 
+                               placeholder="Enter your email for notifications"
+                               required>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            You'll receive notifications about processing status and results.
+                        </div>
+                    </div>
+
+                    <!-- Expected Category (Optional) -->
+                    <div class="mb-4">
+                        <label for="category" class="form-label fw-semibold">
+                            <i class="fas fa-tags me-2"></i>Expected Document Type
+                            <span class="text-muted small">(Optional)</span>
+                        </label>
+                        <select class="form-select form-select-lg" id="category" name="category">
+                            <option value="">Auto-detect document type</option>
+                            <option value="invoice">Invoice</option>
+                            <option value="resume">Resume/CV</option>
+                            <option value="report">Report</option>
+                            <option value="contract">Contract</option>
+                            <option value="medical">Medical Document</option>
+                            <option value="financial">Financial Statement</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Processing Options -->
+                    <div class="mb-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3">
+                                    <i class="fas fa-cogs me-2"></i>Processing Options
+                                </h6>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="virusScan" name="virus_scan" checked>
+                                    <label class="form-check-label" for="virusScan">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        Virus scanning (Recommended)
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="textExtraction" name="text_extraction" checked>
+                                    <label class="form-check-label" for="textExtraction">
+                                        <i class="fas fa-file-alt me-1"></i>
+                                        Text extraction (Amazon Textract)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="contentAnalysis" name="content_analysis" checked>
+                                    <label class="form-check-label" for="contentAnalysis">
+                                        <i class="fas fa-brain me-1"></i>
+                                        Content analysis (Amazon Comprehend)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-upload me-2"></i>
+                            Upload & Process Document
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="row mt-5">
+            <div class="col-md-4 mb-3">
+                <div class="text-center">
+                    <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                    <h6>Secure Processing</h6>
+                    <small class="text-muted">All files are scanned for viruses and processed securely</small>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="text-center">
+                    <i class="fas fa-robot fa-2x text-info mb-2"></i>
+                    <h6>AI-Powered Analysis</h6>
+                    <small class="text-muted">Advanced text extraction and intelligent categorization</small>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="text-center">
+                    <i class="fas fa-bell fa-2x text-warning mb-2"></i>
+                    <h6>Real-time Notifications</h6>
+                    <small class="text-muted">Get notified when processing is complete</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// File upload functionality will be added in app.js
+</script>
+{% endblock %}
