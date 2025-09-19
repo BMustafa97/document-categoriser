@@ -1,0 +1,235 @@
+name: Resource Cleanup
+
+on:
+  schedule:
+    # Run daily at 3 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      cleanup_type:
+        description: 'Type of cleanup to perform'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - ecr-images
+        - artifacts
+        - logs
+      dry_run:
+        description: 'Perform a dry run (no actual cleanup)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  cleanup-ecr-images:
+    name: Cleanup Old ECR Images
+    runs-on: ubuntu-latest
+    if: github.event.inputs.cleanup_type == 'all' || github.event.inputs.cleanup_type == 'ecr-images' || github.event_name == 'schedule'
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-west-1
+    
+    - name: Cleanup old ECR images
+      run: |
+        echo "## 🧹 ECR Image Cleanup" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        REPOSITORY="document-categoriser"
+        DRY_RUN="${{ github.event.inputs.dry_run }}"
+        
+        if [[ "$DRY_RUN" == "true" ]]; then
+          echo "🔍 **DRY RUN MODE** - No images will be deleted" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "Listing images older than 30 days (keeping latest 10)..." >> $GITHUB_STEP_SUMMARY
+        
+        # Get images older than 30 days, excluding latest 10
+        OLD_IMAGES=$(aws ecr describe-images \
+          --repository-name $REPOSITORY \
+          --query 'sort_by(imageDetails,&imagePushedAt)[:-10].imageDigest' \
+          --output text \
+          --filter "imageDetail.imagePushedAt < $(date -d '30 days ago' --iso-8601)")
+        
+        if [[ -z "$OLD_IMAGES" ]]; then
+          echo "✅ No old images found for cleanup" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "📋 Found images to cleanup:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "$OLD_IMAGES" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "$DRY_RUN" != "true" ]]; then
+            # Delete old images
+            for digest in $OLD_IMAGES; do
+              if aws ecr batch-delete-image --repository-name $REPOSITORY --image-ids imageDigest=$digest; then
+                echo "🗑️ Deleted image: $digest" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "❌ Failed to delete image: $digest" >> $GITHUB_STEP_SUMMARY
+              fi
+            done
+          else
+            echo "🔍 DRY RUN: Would delete $(echo $OLD_IMAGES | wc -w) images" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+
+  cleanup-github-artifacts:
+    name: Cleanup Old GitHub Artifacts
+    runs-on: ubuntu-latest
+    if: github.event.inputs.cleanup_type == 'all' || github.event.inputs.cleanup_type == 'artifacts' || github.event_name == 'schedule'
+    
+    steps:
+    - name: Cleanup old artifacts
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const owner = context.repo.owner;
+          const repo = context.repo.repo;
+          const dryRun = '${{ github.event.inputs.dry_run }}' === 'true';
+          
+          // Get artifacts older than 30 days
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          
+          const artifacts = await github.rest.actions.listArtifactsForRepo({
+            owner,
+            repo,
+            per_page: 100
+          });
+          
+          const oldArtifacts = artifacts.data.artifacts.filter(artifact => 
+            new Date(artifact.created_at) < thirtyDaysAgo
+          );
+          
+          let summary = "## 🧹 GitHub Artifacts Cleanup\n\n";
+          
+          if (dryRun) {
+            summary += "🔍 **DRY RUN MODE** - No artifacts will be deleted\n\n";
+          }
+          
+          if (oldArtifacts.length === 0) {
+            summary += "✅ No old artifacts found for cleanup\n";
+          } else {
+            summary += `📋 Found ${oldArtifacts.length} artifacts to cleanup:\n\n`;
+            summary += "| Artifact Name | Size (MB) | Created | Age (days) |\n";
+            summary += "|---------------|-----------|---------|------------|\n";
+            
+            for (const artifact of oldArtifacts) {
+              const ageInDays = Math.floor((new Date() - new Date(artifact.created_at)) / (1000 * 60 * 60 * 24));
+              const sizeMB = (artifact.size_in_bytes / 1024 / 1024).toFixed(2);
+              
+              summary += `| ${artifact.name} | ${sizeMB} | ${artifact.created_at.split('T')[0]} | ${ageInDays} |\n`;
+              
+              if (!dryRun) {
+                try {
+                  await github.rest.actions.deleteArtifact({
+                    owner,
+                    repo,
+                    artifact_id: artifact.id
+                  });
+                  console.log(`Deleted artifact: ${artifact.name}`);
+                } catch (error) {
+                  console.error(`Failed to delete artifact ${artifact.name}:`, error);
+                }
+              }
+            }
+            
+            if (dryRun) {
+              summary += `\n🔍 DRY RUN: Would delete ${oldArtifacts.length} artifacts\n`;
+            } else {
+              summary += `\n🗑️ Cleanup completed: ${oldArtifacts.length} artifacts processed\n`;
+            }
+          }
+          
+          await core.summary.addRaw(summary).write();
+
+  cleanup-cloudwatch-logs:
+    name: Cleanup Old CloudWatch Logs
+    runs-on: ubuntu-latest
+    if: github.event.inputs.cleanup_type == 'all' || github.event.inputs.cleanup_type == 'logs' || github.event_name == 'schedule'
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-west-1
+    
+    - name: Set log retention policies
+      run: |
+        echo "## 📋 CloudWatch Logs Retention Policy Update" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        DRY_RUN="${{ github.event.inputs.dry_run }}"
+        LOG_GROUPS=(
+          "/ecs/document-categoriser"
+          "/aws/ecs/containerinsights/document-categoriser-cluster"
+        )
+        
+        if [[ "$DRY_RUN" == "true" ]]; then
+          echo "🔍 **DRY RUN MODE** - No log retention policies will be changed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        for log_group in "${LOG_GROUPS[@]}"; do
+          echo "Checking log group: $log_group" >> $GITHUB_STEP_SUMMARY
+          
+          if aws logs describe-log-groups --log-group-name-prefix "$log_group" --query 'logGroups[0].logGroupName' --output text | grep -q "$log_group"; then
+            if [[ "$DRY_RUN" != "true" ]]; then
+              # Set retention to 14 days for application logs
+              aws logs put-retention-policy \
+                --log-group-name "$log_group" \
+                --retention-in-days 14
+              echo "✅ Set 14-day retention for: $log_group" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "🔍 DRY RUN: Would set 14-day retention for: $log_group" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⚠️ Log group not found: $log_group" >> $GITHUB_STEP_SUMMARY
+          fi
+        done
+
+  cleanup-summary:
+    name: Cleanup Summary
+    runs-on: ubuntu-latest
+    needs: [cleanup-ecr-images, cleanup-github-artifacts, cleanup-cloudwatch-logs]
+    if: always()
+    
+    steps:
+    - name: Create cleanup summary
+      run: |
+        echo "# 🧹 Resource Cleanup Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
+          echo "## 🔍 DRY RUN MODE" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This was a dry run - no resources were actually deleted." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "## Cleanup Job Status" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Cleanup Type | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| ECR Images | ${{ needs.cleanup-ecr-images.result == 'success' && '✅ Completed' || (needs.cleanup-ecr-images.result == 'skipped' && '⏭️ Skipped') || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| GitHub Artifacts | ${{ needs.cleanup-github-artifacts.result == 'success' && '✅ Completed' || (needs.cleanup-github-artifacts.result == 'skipped' && '⏭️ Skipped') || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| CloudWatch Logs | ${{ needs.cleanup-cloudwatch-logs.result == 'success' && '✅ Completed' || (needs.cleanup-cloudwatch-logs.result == 'skipped' && '⏭️ Skipped') || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "## 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- Review cleanup results above" >> $GITHUB_STEP_SUMMARY
+        echo "- Verify that critical resources were preserved" >> $GITHUB_STEP_SUMMARY
+        echo "- Adjust retention policies if needed" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
+          echo "- Re-run without dry run mode to perform actual cleanup" >> $GITHUB_STEP_SUMMARY
+        fi
