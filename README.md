@@ -157,8 +157,6 @@ Each documentation section will be populated as you implement the corresponding 
 
 Use this space to document important decisions, lessons learned, and notes as you build:
 
-- [DATE] - [Your important decisions and notes here]
+- Project Start Date - 19/09/2025
 
 ---
-
-*Remember to update this README as you progress through the project. The documentation in the `docs/` folder should be your detailed reference, while this README serves as your project dashboard and progress tracker.*
