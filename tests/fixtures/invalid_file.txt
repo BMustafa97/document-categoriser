@@ -1,0 +1,2 @@
+# Invalid file for testing
+This is not a valid PDF or image file.
