@@ -32,17 +32,6 @@ output "document_processing_queue_arn" {
   value       = aws_sqs_queue.document_processing.arn
 }
 
-# Lambda Function Outputs
-output "document_processor_function_name" {
-  description = "Name of the Lambda function for document processing"
-  value       = aws_lambda_function.document_processor.function_name
-}
-
-output "document_processor_function_arn" {
-  description = "ARN of the Lambda function for document processing"
-  value       = aws_lambda_function.document_processor.arn
-}
-
 output "ecr_repository_url" {
   description = "URL of the ECR repository"
   value       = data.aws_ecr_repository.app_repository.repository_url
