@@ -2,20 +2,18 @@ name: Resource Cleanup
 
 on:
   schedule:
-    # Run daily at 3 AM UTC
-    - cron: '0 3 * * *'
+    # Run weekly at 3 AM UTC on Sundays
+    - cron: '0 3 * * 0'
   workflow_dispatch:
     inputs:
       cleanup_type:
         description: 'Type of cleanup to perform'
         required: true
-        default: 'all'
+        default: 'ecr-images'
         type: choice
         options:
-        - all
         - ecr-images
         - artifacts
-        - logs
       dry_run:
         description: 'Perform a dry run (no actual cleanup)'
         required: false
@@ -26,7 +24,7 @@ jobs:
   cleanup-ecr-images:
     name: Cleanup Old ECR Images
     runs-on: ubuntu-latest
-    if: github.event.inputs.cleanup_type == 'all' || github.event.inputs.cleanup_type == 'ecr-images' || github.event_name == 'schedule'
+    if: github.event.inputs.cleanup_type == 'ecr-images' || github.event_name == 'schedule'
     
     steps:
     - name: Configure AWS credentials
