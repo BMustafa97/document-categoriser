@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  document-categoriser:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: document-categoriser-app
+    ports:
+      - "5001:5001"
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - FLASK_DEBUG=${FLASK_DEBUG:-false}
+    volumes:
+      # Mount uploads directory for persistent storage
+      - ./uploads:/app/uploads
+      # For development: uncomment to enable live code reloading
+      # - ./src:/app/src
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Optional: Add nginx for production deployment
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: document-categoriser-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - document-categoriser
+  #   networks:
+  #     - app-network
+  #   restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  uploads:
+    driver: local
