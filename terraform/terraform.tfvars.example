@@ -1,0 +1,76 @@
+# Example Terraform Variables Configuration
+# Copy this file to terraform.tfvars and customize the values
+
+# General Configuration
+aws_region     = "eu-west-1"
+environment    = "dev"
+project_name   = "document-categoriser-app"
+project_owner  = "your-email@example.com"
+repository_url = "https://github.com/BMustafa97/learn-99-names"
+
+# ECR Configuration
+ecr_repository_name = "document-categoriser-app"
+
+# Domain and SSL Configuration (HTTPS Setup)
+# Leave empty for HTTP-only setup
+domain_name = ""  # Example: "myapp.example.com"
+subject_alternative_names = []  # Example: ["www.myapp.example.com"]
+
+# ECS Configuration
+task_cpu      = 256    # 256, 512, 1024, 2048, 4096
+task_memory   = 512    # MB, must be compatible with CPU
+desired_count = 1      # Number of tasks to run
+
+# Container Configuration
+container_name = "document-categoriser"
+container_port = 3000
+image_tag     = "latest"
+
+# Health Check Configuration
+health_check_path    = "/"
+health_check_command = "curl -f http://localhost:3000/ || exit 1"
+
+# Auto Scaling (optional)
+enable_autoscaling = false
+min_capacity      = 1
+max_capacity      = 3
+cpu_target_value  = 70.0
+
+# Load Balancer Configuration
+enable_deletion_protection = false  # Set to true for production
+alb_access_logs_bucket    = ""      # S3 bucket for access logs
+
+# CloudWatch Configuration
+log_retention_days = 14  # How long to keep logs
+
+# Security Configuration
+enable_execute_command = false  # Enable for debugging (disable in production)
+
+# Container Environment Variables
+container_environment_variables = [
+  {
+    name  = "NODE_ENV"
+    value = "production"
+  },
+  # Add more environment variables as needed
+  # {
+  #   name  = "API_URL"
+  #   value = "https://api.example.com"
+  # }
+]
+
+# Container Secrets (from AWS Secrets Manager or Parameter Store)
+container_secrets = [
+  # Example:
+  # {
+  #   name      = "DATABASE_PASSWORD"
+  #   valueFrom = "arn:aws:secretsmanager:eu-west-1:123456789012:secret:prod/myapp/db-password-AbCdEf"
+  # }
+]
+
+# Advanced Networking (optional, uses default VPC if empty)
+vpc_id     = ""
+subnet_ids = []
+
+# Cost Optimization
+use_fargate_spot = false  # Set to true for non-production to save costs
