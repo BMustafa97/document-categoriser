@@ -2,8 +2,9 @@
 
 > **Author:** Bilal Mustafa  
 > **Status:** 🚧 In Development  
-> **Last Updated:** 21-09-2025
+> **Last Updated:** 21-09-2025  
 > **Live URL:** [LIVE URL](https://document-categoriser.thecoder97.com/)
+
 
 ## 📋 Project Overview
 
