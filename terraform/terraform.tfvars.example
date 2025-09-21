@@ -4,12 +4,12 @@
 # General Configuration
 aws_region     = "eu-west-1"
 environment    = "dev"
-project_name   = "arabic-recognition-app"
+project_name   = "document-categoriser-app"
 project_owner  = "your-email@example.com"
 repository_url = "https://github.com/BMustafa97/learn-99-names"
 
 # ECR Configuration
-ecr_repository_name = "arabic-recognition-app"
+ecr_repository_name = "document-categoriser-app"
 
 # Domain and SSL Configuration (HTTPS Setup)
 # Leave empty for HTTP-only setup
@@ -22,7 +22,7 @@ task_memory   = 512    # MB, must be compatible with CPU
 desired_count = 1      # Number of tasks to run
 
 # Container Configuration
-container_name = "arabic-recognition"
+container_name = "document-categoriser"
 container_port = 3000
 image_tag     = "latest"
 

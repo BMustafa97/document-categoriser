@@ -1,6 +1,6 @@
-# Arabic Recognition App - Terraform Infrastructure
+# Doc Categoriser Recognition App - Terraform Infrastructure
 
-This directory contains the complete Infrastructure as Code (IaC) for deploying the Arabic Recognition App on AWS using Terraform.
+This directory contains the complete Infrastructure as Code (IaC) for deploying the Document Categoriser Recognition App on AWS using Terraform.
 
 ## 🏗️ Architecture
 
@@ -83,7 +83,7 @@ make deploy
 # Required settings
 aws_region     = "eu-west-1"
 environment    = "dev"
-project_name   = "arabic-recognition-app"
+project_name   = "document-categoriser-app"
 project_owner  = "your-email@example.com"
 
 # Optional: Enable HTTPS
@@ -133,14 +133,14 @@ Never commit secrets to git! Use AWS services:
 ```bash
 # Create secret in AWS Secrets Manager
 aws secretsmanager create-secret \
-  --name "prod/arabic-recognition-app/api-key" \
+  --name "prod/document-categoriser-app/api-key" \
   --secret-string "your-secret-value"
 
 # Reference in terraform.tfvars
 container_secrets = [
   {
     name      = "API_KEY"
-    valueFrom = "arn:aws:secretsmanager:eu-west-1:123456789012:secret:prod/arabic-recognition-app/api-key"
+    valueFrom = "arn:aws:secretsmanager:eu-west-1:123456789012:secret:prod/document-categoriser-app/api-key"
   }
 ]
 ```
@@ -220,11 +220,11 @@ make docker-push    # Push to ECR
 
 ```bash
 # View application logs
-aws logs tail /ecs/arabic-recognition-app --follow
+aws logs tail /ecs/document-categoriser-app --follow
 
 # View specific time range
 aws logs filter-log-events \
-  --log-group-name "/ecs/arabic-recognition-app" \
+  --log-group-name "/ecs/document-categoriser-app" \
   --start-time 1609459200000
 ```
 
@@ -307,7 +307,7 @@ aws elbv2 describe-target-health \
    aws ecs describe-services --cluster CLUSTER --services SERVICE
    
    # Check container logs
-   aws logs tail /ecs/arabic-recognition-app --follow
+   aws logs tail /ecs/document-categoriser-app --follow
    ```
 
 3. **Load Balancer Health Checks Failing**
