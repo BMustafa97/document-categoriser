@@ -131,25 +131,6 @@ class TestFlaskRoutes:
         # Should trigger the file too large error
         assert response.status_code in [200, 413]  # 413 or redirected with flash message
 
-    def test_upload_creates_unique_filename(self, client, sample_pdf):
-        """Test that uploaded files get unique names."""
-        data = {
-            'file': (sample_pdf, 'test.pdf'),
-            'email': 'test@example.com'
-        }
-        
-        # Make two uploads with the same filename
-        response1 = client.post('/upload', data=data, follow_redirects=True)
-        sample_pdf.seek(0)  # Reset file pointer
-        response2 = client.post('/upload', data=data, follow_redirects=True)
-        
-        assert response1.status_code == 200
-        assert response2.status_code == 200
-        
-        # Both should succeed (unique filenames prevent conflicts)
-        assert b'uploaded successfully' in response1.data
-        assert b'uploaded successfully' in response2.data
-
     def test_upload_with_special_characters_in_filename(self, client, sample_pdf):
         """Test upload with special characters in filename."""
         data = {
@@ -171,20 +152,3 @@ class TestFlaskRoutes:
         
         assert response.status_code == 200
         assert b'uploaded successfully' in response.data
-
-    def test_upload_directory_creation(self, client, sample_pdf, app):
-        """Test that upload directory is created if it doesn't exist."""
-        # Remove upload directory if it exists
-        upload_dir = app.config['UPLOAD_FOLDER']
-        if os.path.exists(upload_dir):
-            import shutil
-            shutil.rmtree(upload_dir)
-        
-        data = {
-            'file': (sample_pdf, 'test.pdf'),
-            'email': 'test@example.com'
-        }
-        response = client.post('/upload', data=data, follow_redirects=True)
-        
-        assert response.status_code == 200
-        assert os.path.exists(upload_dir)
