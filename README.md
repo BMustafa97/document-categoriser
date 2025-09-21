@@ -2,7 +2,8 @@
 
 > **Author:** Bilal Mustafa  
 > **Status:** 🚧 In Development  
-> **Last Updated:** [DATE - Update as you progress]
+> **Last Updated:** 21-09-2025
+> **Live URL:** [LIVE URL](https://document-categoriser.thecoder97.com/)
 
 ## 📋 Project Overview
 
@@ -20,13 +21,13 @@ Build a Flask web app where users can upload documents (PDFs, images, etc.). The
 
 | Component | Status | Notes | Documentation |
 |-----------|--------|-------|---------------|
-| **Flask Frontend** | ⏳ Not Started | Simple UI for file upload and status display | [Link to docs/](#) |
+| **Flask Frontend** | 🚧  Started | Simple UI for file upload and status display | [Link to docs/](#) |
 | **Virus Scanning** | ⏳ Not Started | ClamAV or third-party API integration | [Link to docs/](#) |
-| **File Storage (S3)** | ⏳ Not Started | Store clean files and metadata | [Link to docs/](#) |
+| **File Storage (S3)** | 🚧  Started | Store clean files and metadata | [Link to docs/](#) |
 | **Text Extraction (Textract)** | ⏳ Not Started | Extract text from PDFs and images | [Link to docs/](#) |
 | **Content Analysis (Comprehend)** | ⏳ Not Started | Language detection, entity extraction, classification | [Link to docs/](#) |
 | **Notification System (SES)** | ⏳ Not Started | Email confirmations and results | [Link to docs/](#) |
-| **Containerisation & Deployment** | ⏳ Not Started | Docker + ECR + Fargate + ALB | [Link to docs/](#) |
+| **Containerisation & Deployment** | ✅   Not Started | Docker + ECR + Fargate + ALB | [Link to docs/](#) |
 
 ### Status Legend
 - ⏳ **Not Started** - Component not yet implemented
@@ -43,9 +44,9 @@ Build a Flask web app where users can upload documents (PDFs, images, etc.). The
 | **Textract** | Extract text from documents | ⏳ Not Started | Region: `[YOUR_REGION]` |
 | **Comprehend** | Categorise and analyse content | ⏳ Not Started | Custom classifiers: `[LIST_HERE]` |
 | **SES** | Send email notifications | ⏳ Not Started | Verified email: `[YOUR_EMAIL]` |
-| **ECR** | Store Docker images | ⏳ Not Started | Repository: `[YOUR_ECR_REPO]` |
-| **ALB** | Route traffic to Flask app | ⏳ Not Started | Domain: `[YOUR_DOMAIN]` |
-| **Fargate/EC2** | Host containerised app | ⏳ Not Started | Instance type: `[INSTANCE_TYPE]` |
+| **ECR** | Store Docker images | ✅  Completed | Repository: `[YOUR_ECR_REPO]` |
+| **ALB** | Route traffic to Flask app | ✅  Completed | Domain: `[YOUR_DOMAIN]` |
+| **Fargate/EC2** | Host containerised app | ✅  Completed | Instance type: `[INSTANCE_TYPE]` |
 
 ## 📁 Project Structure
 
