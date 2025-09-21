@@ -14,7 +14,7 @@ Build a Flask web app where users can upload documents (PDFs, images, etc.). The
 
 - [ ] **Primary Goal:** Create a secure document processing pipeline
 - [ ] **Secondary Goal:** Implement intelligent document categorisation
-- [ ] **Secondary Goal:** Deploy scalable containerised solution on AWS
+- [ ] **Final Goal:** Deploy scalable containerised solution on AWS
 
 ## 🏗️ Architecture Components
 
@@ -28,7 +28,7 @@ Build a Flask web app where users can upload documents (PDFs, images, etc.). The
 | **Text Extraction (Textract)** | ⏳ Not Started | Extract text from PDFs and images | [Link to docs/](#) |
 | **Content Analysis (Comprehend)** | ⏳ Not Started | Language detection, entity extraction, classification | [Link to docs/](#) |
 | **Notification System (SES)** | ⏳ Not Started | Email confirmations and results | [Link to docs/](#) |
-| **Containerisation & Deployment** | ✅   Not Started | Docker + ECR + Fargate + ALB | [Link to docs/](#) |
+| **Containerisation & Deployment** | ✅   Started | Docker + ECR + Fargate + ALB | [Link to docs/](#) |
 
 ### Status Legend
 - ⏳ **Not Started** - Component not yet implemented
@@ -41,13 +41,13 @@ Build a Flask web app where users can upload documents (PDFs, images, etc.). The
 
 | Service | Purpose | Implementation Status | Configuration Notes |
 |---------|---------|----------------------|-------------------|
-| **S3** | Store uploaded documents | ⏳ Not Started | Bucket name: `[YOUR_BUCKET_NAME]` |
-| **Textract** | Extract text from documents | ⏳ Not Started | Region: `[YOUR_REGION]` |
-| **Comprehend** | Categorise and analyse content | ⏳ Not Started | Custom classifiers: `[LIST_HERE]` |
-| **SES** | Send email notifications | ⏳ Not Started | Verified email: `[YOUR_EMAIL]` |
-| **ECR** | Store Docker images | ✅  Completed | Repository: `[YOUR_ECR_REPO]` |
-| **ALB** | Route traffic to Flask app | ✅  Completed | Domain: `[YOUR_DOMAIN]` |
-| **Fargate/EC2** | Host containerised app | ✅  Completed | Instance type: `[INSTANCE_TYPE]` |
+| **S3** | Store uploaded documents | ⏳ Not Started | Bucket name: `[PRIVATE]` |
+| **Textract** | Extract text from documents | ⏳ Not Started | Region: `[PRIVATE]` |
+| **Comprehend** | Categorise and analyse content | ⏳ Not Started | Custom classifiers: `[PRIVATE]` |
+| **SES** | Send email notifications | ⏳ Not Started | Verified email: `[PRIVATE]` |
+| **ECR** | Store Docker images | ✅  Completed | Repository: `[PRIVATE]` |
+| **ALB** | Route traffic to Flask app | ✅  Completed | Domain: `document-categoriser.thecoder97.com` |
+| **Fargate** | Host containerised app | ✅  Completed | Instance type: `[FARGATE SPOT]` |
 
 ## 📁 Project Structure
 
@@ -88,33 +88,33 @@ document-categoriser/
 ## 🚀 Development Milestones
 
 ### Phase 1: Core Application Setup
-- [ ] Set up Flask application structure
-- [ ] Create basic file upload interface
-- [ ] Implement local file handling
-- [ ] Set up logging and error handling
-- [ ] **Target Completion:** [SET_DATE]
+- [✅] Set up Flask application structure
+- [✅] Create basic file upload interface
+- [✅] Implement local file handling
+- [✅] Set up logging and error handling
+- [ ] **Target Completion:** [29/09/2025]
 
 ### Phase 2: AWS Integration
-- [ ] Configure AWS credentials and permissions
-- [ ] Implement S3 file storage
+- [✅] Configure AWS credentials and permissions
+- [✅] Implement S3 file storage
 - [ ] Integrate Amazon Textract for text extraction
 - [ ] Add Amazon Comprehend for content analysis
-- [ ] **Target Completion:** [SET_DATE]
+- [ ] **Target Completion:** [05/10/2025]
 
 ### Phase 3: Security & Notifications
 - [ ] Implement virus scanning (ClamAV/API)
 - [ ] Set up Amazon SES for notifications
 - [ ] Add input validation and sanitization
 - [ ] Implement error handling and retry logic
-- [ ] **Target Completion:** [SET_DATE]
+- [ ] **Target Completion:** [10/10/2025]
 
 ### Phase 4: Containerisation & Deployment
-- [ ] Create Dockerfile and docker-compose
-- [ ] Set up Amazon ECR repository
-- [ ] Configure Fargate deployment
-- [ ] Set up Application Load Balancer
-- [ ] Implement CI/CD pipeline
-- [ ] **Target Completion:** [SET_DATE]
+- [✅] Create Dockerfile and docker-compose
+- [✅] Set up Amazon ECR repository
+- [✅] Configure Fargate deployment
+- [✅] Set up Application Load Balancer
+- [✅] Implement CI/CD pipeline
+- [✅] **Target Completion:** [21/09/2025]
 
 ## 📚 Documentation Structure
 
@@ -129,24 +129,25 @@ Each documentation section will be populated as you implement the corresponding 
 
 ## 🛠️ Current Development Focus
 
-**Currently Working On:** [UPDATE_THIS_SECTION]
+**Currently Working On:** PHASE 2
 
-**Next Up:** [UPDATE_THIS_SECTION]
+**Next Up:** PHASE 3
 
-**Blockers/Issues:** [UPDATE_THIS_SECTION]
+**Blockers/Issues:** NONE
 
 ## 📈 Progress Tracking
 
 ### Overall Progress: [X]% Complete
 
-- **Phase 1 (Core App):** 0% ⏳
+- **Phase 1 (Core App):** 60% ⏳
 - **Phase 2 (AWS Integration):** 0% ⏳
 - **Phase 3 (Security & Notifications):** 0% ⏳
-- **Phase 4 (Deployment):** 0% ⏳
+- **Phase 4 (Deployment):** 100% ⏳
 
 ### Recent Updates
-- [DATE] - Project template created
-- [Add your updates here as you progress]
+- [19/09/2025] - Project template created
+- [20/09/2025] - Main Project set in place
+- [21/09/2025] - Project dockerised and v1 depoloyed
 
 ## 🔗 Quick Links
 
