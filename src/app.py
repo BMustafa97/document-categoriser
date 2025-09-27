@@ -26,6 +26,15 @@ def index():
     """Main page with upload form."""
     return render_template('index.html')
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for load balancers and monitoring."""
+    return jsonify({
+        'status': 'healthy',
+        'service': 'document-categoriser',
+        'timestamp': datetime.utcnow().isoformat()
+    }), 200
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     """Handle file upload."""
@@ -119,4 +128,7 @@ if __name__ == '__main__':
     # Create upload directory if it doesn't exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    # Set debug mode based on environment
+    debug_mode = os.environ.get('FLASK_ENV', 'production') == 'development'
+    
+    app.run(debug=debug_mode, host='0.0.0.0', port=5001)

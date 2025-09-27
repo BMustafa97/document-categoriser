@@ -1,35 +1,44 @@
-# Doc Categoriser Recognition App - Terraform Infrastructure
+# Arabic Recognition App - AWS App Runner Infrastructure
 
-This directory contains the complete Infrastructure as Code (IaC) for deploying the Document Categoriser Recognition App on AWS using Terraform.
+This directory contains the Terraform configuration for deploying the Arabic Recognition App infrastructure on AWS using **AWS App Runner** - a cost-effective, fully managed service that eliminates the need for expensive load balancers and complex ECS configurations.
 
 ## 🏗️ Architecture
 
 ```
 Internet
     |
-    └── Application Load Balancer (ALB)
+    └── AWS App Runner Service (with Auto HTTPS)
             |
-            └── Target Group
+            ├── Auto Scaling (1-3 instances)
+            ├── Load Balancing (Built-in)
+            ├── SSL/HTTPS (Automatic)
+            └── Container Runtime
                     |
-                    └── ECS Fargate Service
-                            |
-                            └── Container Tasks
-                                    |
-                                    └── ECR Repository (External)
+                    └── ECR Repository (Your Application)
 ```
+
+## 💰 Cost Savings
+
+By switching from ECS + ALB to App Runner, you save approximately **$20-30/month**:
+
+- **ALB Cost**: ~$16-18/month → **ELIMINATED** ✅
+- **VPC/NAT Costs**: ~$5-10/month → **ELIMINATED** ✅
+- **ECS Management**: Complex → **FULLY MANAGED** ✅
+- **SSL Certificates**: Manual ACM setup → **AUTOMATIC** ✅
+- **Load Balancing**: Manual ALB config → **BUILT-IN** ✅
+
+**Total Monthly Cost**: ~$3-15/month (vs ~$25-45/month with ECS+ALB)
 
 ## 📁 File Structure
 
 ```
 terraform/
-├── main.tf                    # Main infrastructure resources
-├── variables.tf               # Input variables and validation
-├── outputs.tf                 # Output values and information
+├── main.tf                    # App Runner service and IAM roles
+├── variables.tf               # App Runner specific variables
+├── outputs.tf                 # Service URLs and configuration info
 ├── versions.tf                # Provider version constraints
-├── locals.tf                  # Local values and computed variables
-├── Makefile                   # Helper commands for common operations
-├── terraform.tfvars.example   # Example configuration file
-├── .gitignore                # Git ignore rules (protects secrets)
+├── locals.tf                  # Local values and validation
+├── terraform.tfvars.example   # Example configuration
 └── README.md                 # This file
 ```
 
@@ -37,322 +46,211 @@ terraform/
 
 ### 1. Prerequisites
 
-- [Terraform](https://www.terraform.io/downloads.html) >= 1.5.0
+- [Terraform](https://www.terraform.io/downloads.html) >= 1.0
 - [AWS CLI](https://aws.amazon.com/cli/) configured with appropriate permissions
-- Docker (for building and pushing images)
-- **Existing ECR Repository** - The repository must exist before deployment
+- **Existing ECR Repository** with your application image
 
-> **⚠️ Important**: Ensure your ECR repository exists. The Terraform configuration references it as a data source but doesn't create it.
+> **⚠️ Important**: Your ECR repository must exist and contain a Docker image before deployment.
 
-### 2. Initial Setup
+### 2. Configuration
 
 ```bash
-# Clone the repository
-git clone https://github.com/BMustafa97/learn-99-names.git
-cd learn-99-names/terraform
-
-# Copy and configure variables
+# Copy example configuration
 cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your settings
 
-# Initialize Terraform
-make init
-
-# Validate configuration
-make check
+# Edit the configuration
+nano terraform.tfvars
 ```
 
-### 3. Deploy Infrastructure
+### 3. Key Configuration Options
+
+```hcl
+# Basic Configuration
+project_name   = "arabic-recognition-app"
+environment    = "prod"
+aws_region     = "eu-west-1"
+
+# App Runner Settings
+apprunner_cpu    = "0.25 vCPU"  # Start small, scales automatically
+apprunner_memory = "0.5 GB"     # Cost-effective for most apps
+container_port   = 3000
+
+# Auto Scaling
+min_size        = 1    # Minimum instances
+max_size        = 3    # Maximum instances
+max_concurrency = 100  # Requests per instance
+
+# Custom Domain (Optional)
+domain_name = "myapp.example.com"  # Leave empty for App Runner URL
+```
+
+### 4. Deploy
 
 ```bash
-# Plan the deployment
-make plan
+# Initialize Terraform
+terraform init
 
-# Apply the infrastructure
-make apply
+# Review the plan
+terraform plan
 
-# Complete deployment with Docker image
-make deploy
+# Deploy the infrastructure
+terraform apply
 ```
 
-## ⚙️ Configuration
+## 🌐 Accessing Your Application
 
-### Basic Configuration (terraform.tfvars)
-
-```hcl
-# Required settings
-aws_region     = "eu-west-1"
-environment    = "dev"
-project_name   = "document-categoriser-app"
-project_owner  = "your-email@example.com"
-
-# Optional: Enable HTTPS
-domain_name = "myapp.example.com"
-
-# Container settings
-container_port = 3000
-desired_count  = 1
-task_cpu      = 256
-task_memory   = 512
+### Option 1: App Runner Default URL (Automatic HTTPS)
+After deployment, get your App Runner URL:
+```bash
+terraform output application_url_default
+# Output: https://abc123.eu-west-1.awsapprunner.com
 ```
 
-### Environment-Specific Configurations
-
-#### Development
-```hcl
-environment = "dev"
-enable_deletion_protection = false
-log_retention_days = 7
-enable_autoscaling = false
+### Option 2: Custom Domain (Optional)
+If you configured a custom domain:
+```bash
+terraform output application_url_custom
+# Output: https://myapp.example.com
 ```
 
-#### Production
+## 🔄 Auto Deployments
+
+App Runner can automatically deploy when you push new images:
+
+```bash
+# Push a new image to ECR
+docker push your-account.dkr.ecr.eu-west-1.amazonaws.com/arabic-recognition-app:latest
+
+# App Runner automatically detects and deploys (if auto_deployments_enabled = true)
+```
+
+## 📊 Monitoring
+
+### App Runner Console
+- View metrics in AWS Console: App Runner → Services → your-service
+- Built-in metrics: Requests, Response Time, CPU, Memory
+- Automatic logging to CloudWatch
+
+### Terraform Outputs
+```bash
+# Get service information
+terraform output apprunner_service_url
+terraform output apprunner_service_status
+terraform output estimated_monthly_cost
+```
+
+## 🔧 Configuration Reference
+
+### App Runner Instance Sizes
+
+| CPU     | Memory Options |
+|---------|---------------|
+| 0.25 vCPU | 0.5 GB, 1 GB |
+| 0.5 vCPU  | 1 GB, 2 GB |
+| 1 vCPU    | 2 GB, 3 GB, 4 GB |
+| 2 vCPU    | 4 GB, 6 GB, 8 GB |
+| 4 vCPU    | 8 GB, 10 GB, 12 GB |
+
+### Health Check Settings
 ```hcl
-environment = "prod"
-enable_deletion_protection = true
-log_retention_days = 90
-enable_autoscaling = true
-max_capacity = 5
-alb_access_logs_bucket = "your-production-logs-bucket"
+health_check_path                = "/"      # Your health endpoint
+health_check_healthy_threshold   = 1        # Success count
+health_check_unhealthy_threshold = 5        # Failure count
+health_check_interval           = 10       # Check frequency (seconds)
+health_check_timeout            = 2        # Timeout (seconds)
 ```
 
 ## 🔒 Security Features
 
-### Built-in Security
+- **Automatic HTTPS**: SSL certificates managed automatically
+- **IAM Integration**: Secure ECR access with minimal permissions
+- **VPC-less**: No complex networking configuration required
+- **DDoS Protection**: Built-in AWS protection
+- **Auto Updates**: Platform updates handled by AWS
 
-- **Encryption at Rest**: ECR images, CloudWatch logs (KMS)
-- **Encryption in Transit**: HTTPS/TLS for web traffic
-- **Network Security**: Security groups with least privilege
-- **IAM Security**: Minimal required permissions
-- **Container Security**: Non-root containers, readonly filesystem options
-
-### Secrets Management
-
-Never commit secrets to git! Use AWS services:
-
-```bash
-# Create secret in AWS Secrets Manager
-aws secretsmanager create-secret \
-  --name "prod/document-categoriser-app/api-key" \
-  --secret-string "your-secret-value"
-
-# Reference in terraform.tfvars
-container_secrets = [
-  {
-    name      = "API_KEY"
-    valueFrom = "arn:aws:secretsmanager:eu-west-1:123456789012:secret:prod/document-categoriser-app/api-key"
-  }
-]
-```
-
-## 🛠️ Available Commands
-
-The Makefile provides convenient commands:
-
-```bash
-make help           # Show all available commands
-make init           # Initialize Terraform
-make plan           # Plan infrastructure changes
-make apply          # Apply changes
-make destroy        # Destroy infrastructure
-make status         # Show current status
-make outputs        # Show infrastructure outputs
-
-# Development workflow
-make dev-plan       # Plan for development
-make deploy         # Complete deployment workflow
-
-# Maintenance
-make format         # Format Terraform files
-make validate       # Validate configuration
-make upgrade        # Upgrade providers
-make backup-state   # Backup state file
-
-# Emergency operations
-make emergency-scale-down  # Scale to 0 (cost saving)
-make emergency-scale-up    # Scale back to 1
-
-# Docker operations
-make docker-build   # Build container image
-make docker-push    # Push to ECR
-```
-
-## 💰 Cost Management
-
-### Estimated Monthly Costs
-
-| Component | Development | Production | Notes |
-|-----------|-------------|------------|-------|
-| ECS Fargate | $6-12 | $12-60 | Based on task size/count |
-| ALB | $16-18 | $16-18 | Fixed cost |
-| CloudWatch Logs | $1-3 | $3-10 | Based on volume |
-| ECR Storage | $0.10/GB | $1-5 | Based on images |
-| **Total** | **$23-33** | **$32-93** | Typical ranges |
+## 💡 Best Practices
 
 ### Cost Optimization
+- Start with small instance sizes (0.25 vCPU, 0.5 GB)
+- Use auto-scaling to handle traffic spikes
+- Monitor usage and adjust instance sizes
 
-1. **Development**: Use Fargate Spot
-   ```hcl
-   use_fargate_spot = true
-   ```
+### Performance
+- Optimize your Docker image size
+- Implement proper health checks
+- Use appropriate concurrency settings
 
-2. **Auto Scaling**: Scale to zero when not used
-   ```hcl
-   enable_autoscaling = true
-   min_capacity = 0
-   ```
+### Security
+- Use IAM roles instead of access keys
+- Store secrets in AWS Secrets Manager
+- Enable CloudTrail for audit logging
 
-3. **Log Retention**: Reduce for non-production
-   ```hcl
-   log_retention_days = 7
-   ```
+## 🔄 Updating Your Application
 
-## 📊 Monitoring
-
-### Built-in Monitoring
-
-- **ECS Container Insights**: Enabled by default
-- **ALB Metrics**: Request count, latency, error rates
-- **CloudWatch Logs**: Centralized application logs
-- **Health Checks**: ALB and container health monitoring
-
-### Viewing Logs
-
+### Manual Deployment
 ```bash
-# View application logs
-aws logs tail /ecs/document-categoriser-app --follow
+# Build and push new image
+docker build -t your-app .
+docker tag your-app your-account.dkr.ecr.region.amazonaws.com/repo:new-tag
+docker push your-account.dkr.ecr.region.amazonaws.com/repo:new-tag
 
-# View specific time range
-aws logs filter-log-events \
-  --log-group-name "/ecs/document-categoriser-app" \
-  --start-time 1609459200000
+# Update Terraform with new tag
+terraform apply -var="image_tag=new-tag"
 ```
 
-## 🔄 CI/CD Integration
+### Automatic Deployment (Recommended)
+Set `auto_deployments_enabled = true` in your configuration. App Runner will automatically deploy when you push new images to ECR.
 
-### GitHub Actions
-
-Use the infrastructure outputs in your CI/CD pipeline:
-
-```yaml
-- name: Deploy to ECS
-  env:
-    ECR_REPOSITORY: ${{ steps.terraform.outputs.ecr_repository_url }}
-    ECS_CLUSTER: ${{ steps.terraform.outputs.ecs_cluster_name }}
-    ECS_SERVICE: ${{ steps.terraform.outputs.ecs_service_name }}
-```
-
-### Infrastructure Updates
-
-```bash
-# Update infrastructure
-git pull origin main
-terraform plan
-terraform apply
-
-# Update application
-make docker-push
-
-# Update ECS service (triggers deployment)
-aws ecs update-service \
-  --cluster $(terraform output -raw ecs_cluster_name) \
-  --service $(terraform output -raw ecs_service_name) \
-  --force-new-deployment
-```
-
-## 🧪 Testing
-
-### Validate Infrastructure
-
-```bash
-# Test configuration
-make validate
-
-# Test plan
-make plan
-
-# Test specific environment
-terraform plan -var="environment=staging"
-```
-
-### Health Checks
-
-```bash
-# Check application health
-curl -I $(terraform output -raw application_url)
-
-# Check ECS service health
-aws ecs describe-services \
-  --cluster $(terraform output -raw ecs_cluster_name) \
-  --services $(terraform output -raw ecs_service_name)
-
-# Check target group health
-aws elbv2 describe-target-health \
-  --target-group-arn $(terraform output -raw target_group_arn)
-```
-
-## 🐛 Troubleshooting
+## 📝 Troubleshooting
 
 ### Common Issues
 
-1. **SSL Certificate Validation**
-   ```bash
-   # Get DNS records to add
-   terraform output ssl_certificate_validation_records
-   ```
+**Service Failed to Start**
+- Check your application listens on the correct port
+- Verify environment variables are correct
+- Review App Runner service logs in CloudWatch
 
-2. **ECS Tasks Not Starting**
-   ```bash
-   # Check service events
-   aws ecs describe-services --cluster CLUSTER --services SERVICE
-   
-   # Check container logs
-   aws logs tail /ecs/document-categoriser-app --follow
-   ```
+**Custom Domain Not Working**
+- Ensure DNS points to the App Runner DNS target
+- Check domain validation status
+- Verify Route 53 hosted zone exists
 
-3. **Load Balancer Health Checks Failing**
-   ```bash
-   # Test direct container access
-   curl -I http://$(terraform output -raw load_balancer_dns_name)
-   
-   # Check target group health
-   aws elbv2 describe-target-health --target-group-arn TG_ARN
-   ```
+**High Costs**
+- Check if you're using appropriate instance sizes
+- Monitor request patterns and adjust concurrency
+- Consider using auto-scaling more aggressively
 
-### Debug Mode
-
+### Useful Commands
 ```bash
-# Enable Terraform debugging
-export TF_LOG=DEBUG
-terraform plan
+# Check service status
+aws apprunner describe-service --service-arn $(terraform output -raw apprunner_service_arn)
 
-# Enable AWS CLI debugging
-aws ecs describe-clusters --debug
+# View recent logs
+aws logs describe-log-groups --log-group-name-prefix /aws/apprunner
+
+# Force new deployment
+aws apprunner start-deployment --service-arn $(terraform output -raw apprunner_service_arn)
 ```
+
+## 🧹 Cleanup
+
+To destroy all resources:
+```bash
+terraform destroy
+```
+
+> **Note**: This will delete your App Runner service but preserve your ECR repository and images.
 
 ## 📚 Additional Resources
 
-- **Main Documentation**: See [terraform-inf.md](../terraform-inf.md) for comprehensive guide
-- **Infrastructure Scripts**: Original bash scripts in `scripts/` directory
-- **Terraform Documentation**: [terraform.io](https://terraform.io)
-- **AWS ECS Guide**: [AWS ECS Documentation](https://docs.aws.amazon.com/ecs/)
+- [AWS App Runner Documentation](https://docs.aws.amazon.com/apprunner/)
+- [App Runner Pricing](https://aws.amazon.com/apprunner/pricing/)
+- [Terraform AWS Provider - App Runner](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apprunner_service)
 
-## 🤝 Contributing
+## 🤝 Support
 
-1. **Test Changes**: Always test in development environment first
-2. **Security First**: Never commit secrets or state files
-3. **Documentation**: Update documentation with changes
-4. **Validation**: Run `make check` before committing
-
-## 📞 Support
-
-For issues or questions:
-
-1. Check the troubleshooting section above
-2. Review CloudWatch logs and AWS console
-3. Consult the main terraform-inf.md documentation
-4. Open an issue in the repository
-
----
-
-**Security Reminder**: This infrastructure is designed for public repositories. Never commit `.tfvars` files, state files, or any secrets to version control!
+If you encounter issues:
+1. Check the [troubleshooting section](#-troubleshooting)
+2. Review AWS App Runner service logs
+3. Validate your Terraform configuration
+4. Ensure your ECR repository and images exist

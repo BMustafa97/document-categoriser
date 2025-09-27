@@ -1,4 +1,4 @@
-# Makefile for Docuument Categoriser App Terraform Infrastructure
+# Makefile for Document Categoriser App Terraform Infrastructure
 # Provides convenient commands for managing infrastructure
 
 .PHONY: help init plan apply destroy validate format check clean status
@@ -129,7 +129,7 @@ aws-check: ## Check AWS credentials and permissions
 # Docker helpers (for container deployment)
 docker-build: ## Build Docker image (run from project root)
 	@if [ -f ../Dockerfile ]; then \
-		cd .. && docker build -t $(shell terraform output -raw ecr_repository_url 2>/dev/null || echo "document-categoriser-app"):latest .; \
+		cd .. && docker build -t $(shell terraform output -raw ecr_repository_url 2>/dev/null || echo "arabic-recognition-app"):latest .; \
 	else \
 		echo "❌ Dockerfile not found in parent directory"; \
 		exit 1; \
