@@ -2,8 +2,8 @@
 
 > **Author:** Bilal Mustafa  
 > **Status:** 🚧 In Development  
-> **Last Updated:** 21-09-2025  
-> **Live URL:** [LIVE URL](2sejrxbipy.eu-west-1.awsapprunner.com)
+> **Last Updated:** 28-09-2025  
+> **Live URL:** [LIVE URL](https://uepnq2mg43.eu-west-1.awsapprunner.com/)
 
 
 ## 📋 Project Overview
