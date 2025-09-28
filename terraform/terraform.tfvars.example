@@ -1,61 +1,55 @@
-# Example Terraform Variables Configuration
+# Example Terraform Variables Configuration for AWS App Runner
 # Copy this file to terraform.tfvars and customize the values
 
 # General Configuration
 aws_region     = "eu-west-1"
-environment    = "dev"
-project_name   = "document-categoriser-app"
+environment    = "prod"
+project_name   = "document-categoriser"
 project_owner  = "your-email@example.com"
-repository_url = "https://github.com/BMustafa97/learn-99-names"
+repository_url = "https://github.com/BMustafa97/document-categoriser"
 
 # ECR Configuration
-ecr_repository_name = "document-categoriser-app"
+ecr_repository_name = "document-categoriser"
+image_tag          = "latest"
 
-# Domain and SSL Configuration (HTTPS Setup)
-# Leave empty for HTTP-only setup
-domain_name = ""  # Example: "myapp.example.com"
-subject_alternative_names = []  # Example: ["www.myapp.example.com"]
+# Domain Configuration (Optional - leave empty to use App Runner default URL)
+domain_name           = ""  # Example: "myapp.example.com"
+enable_www_subdomain  = true
 
-# ECS Configuration
-task_cpu      = 256    # 256, 512, 1024, 2048, 4096
-task_memory   = 512    # MB, must be compatible with CPU
-desired_count = 1      # Number of tasks to run
+# App Runner Configuration
+apprunner_cpu    = "0.25 vCPU"  # Options: "0.25 vCPU", "0.5 vCPU", "1 vCPU", "2 vCPU", "4 vCPU"
+apprunner_memory = "0.5 GB"     # Options: "0.5 GB", "1 GB", "2 GB", "3 GB", "4 GB", "6 GB", "8 GB", "10 GB", "12 GB"
+container_port   = 5001
 
-# Container Configuration
-container_name = "document-categoriser"
-container_port = 3000
-image_tag     = "latest"
+# Auto Deployments
+auto_deployments_enabled = true
+
+# Auto Scaling Configuration
+max_concurrency = 100  # Maximum concurrent requests per instance
+min_size       = 1     # Minimum number of instances
+max_size       = 3     # Maximum number of instances
 
 # Health Check Configuration
-health_check_path    = "/"
-health_check_command = "curl -f http://localhost:3000/ || exit 1"
-
-# Auto Scaling (optional)
-enable_autoscaling = false
-min_capacity      = 1
-max_capacity      = 3
-cpu_target_value  = 70.0
-
-# Load Balancer Configuration
-enable_deletion_protection = false  # Set to true for production
-alb_access_logs_bucket    = ""      # S3 bucket for access logs
-
-# CloudWatch Configuration
-log_retention_days = 14  # How long to keep logs
-
-# Security Configuration
-enable_execute_command = false  # Enable for debugging (disable in production)
+health_check_path                = "/"
+health_check_healthy_threshold   = 1
+health_check_unhealthy_threshold = 5
+health_check_interval           = 10  # seconds
+health_check_timeout            = 2   # seconds
 
 # Container Environment Variables
 container_environment_variables = [
   {
-    name  = "NODE_ENV"
+    name  = "FLASK_ENV"
     value = "production"
+  },
+  {
+    name  = "PYTHONUNBUFFERED"
+    value = "1"
   },
   # Add more environment variables as needed
   # {
-  #   name  = "API_URL"
-  #   value = "https://api.example.com"
+  #   name  = "SECRET_KEY"
+  #   value = "your-secret-key"
   # }
 ]
 
@@ -67,9 +61,6 @@ container_secrets = [
   #   valueFrom = "arn:aws:secretsmanager:eu-west-1:123456789012:secret:prod/myapp/db-password-AbCdEf"
   # }
 ]
-
-# Advanced Networking (optional, uses default VPC if empty)
-vpc_id     = ""
 subnet_ids = []
 
 # Cost Optimization

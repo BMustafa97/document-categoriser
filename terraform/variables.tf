@@ -1,4 +1,4 @@
-# Variables for Document Categoriser App Infrastructure
+# Variables for Document Categoriser App Infrastructure - AWS App Runner
 
 # General Configuration
 variable "aws_region" {
@@ -48,63 +48,40 @@ variable "ecr_repository_name" {
   default     = "document-categoriser"
 }
 
-# Domain and SSL Configuration
+# Domain Configuration
 variable "domain_name" {
-  description = "Domain name for HTTPS certificate (leave empty for HTTP only)"
+  description = "Domain name for custom domain (leave empty to use App Runner default URL)"
   type        = string
   default     = ""
 }
 
-variable "subject_alternative_names" {
-  description = "Additional domain names for the SSL certificate"
-  type        = list(string)
-  default     = []
+variable "enable_www_subdomain" {
+  description = "Enable www subdomain for custom domain"
+  type        = bool
+  default     = true
 }
 
-variable "route53_zone_id" {
-  description = "Existing Route 53 hosted zone ID (leave empty to create new zone)"
+# App Runner Configuration
+variable "apprunner_cpu" {
+  description = "CPU units for App Runner (0.25 vCPU, 0.5 vCPU, 1 vCPU, 2 vCPU, 4 vCPU)"
   type        = string
-  default     = ""
-}
-
-# ECS Configuration
-variable "task_cpu" {
-  description = "CPU units for the ECS task (256, 512, 1024, etc.)"
-  type        = number
-  default     = 256
+  default     = "0.25 vCPU"
   
   validation {
-    condition     = contains([256, 512, 1024, 2048, 4096], var.task_cpu)
-    error_message = "Task CPU must be one of: 256, 512, 1024, 2048, 4096."
+    condition     = contains(["0.25 vCPU", "0.5 vCPU", "1 vCPU", "2 vCPU", "4 vCPU"], var.apprunner_cpu)
+    error_message = "App Runner CPU must be one of: 0.25 vCPU, 0.5 vCPU, 1 vCPU, 2 vCPU, 4 vCPU."
   }
 }
 
-variable "task_memory" {
-  description = "Memory for the ECS task in MB"
-  type        = number
-  default     = 512
-  
-  validation {
-    condition = var.task_memory >= 512 && var.task_memory <= 30720
-    error_message = "Task memory must be between 512 and 30720 MB."
-  }
-}
-
-variable "desired_count" {
-  description = "Desired number of ECS tasks"
-  type        = number
-  default     = 1
-  
-  validation {
-    condition     = var.desired_count >= 1 && var.desired_count <= 10
-    error_message = "Desired count must be between 1 and 10."
-  }
-}
-
-variable "container_name" {
-  description = "Name of the container"
+variable "apprunner_memory" {
+  description = "Memory for App Runner (0.5 GB, 1 GB, 2 GB, 3 GB, 4 GB, 6 GB, 8 GB, 10 GB, 12 GB)"
   type        = string
-  default     = "document-categoriser"
+  default     = "0.5 GB"
+  
+  validation {
+    condition     = contains(["0.5 GB", "1 GB", "2 GB", "3 GB", "4 GB", "6 GB", "8 GB", "10 GB", "12 GB"], var.apprunner_memory)
+    error_message = "App Runner memory must be a valid value."
+  }
 }
 
 variable "container_port" {
@@ -124,78 +101,95 @@ variable "image_tag" {
   default     = "latest"
 }
 
+variable "auto_deployments_enabled" {
+  description = "Enable automatic deployments when new image is pushed to ECR"
+  type        = bool
+  default     = true
+}
+
+# Auto Scaling Configuration
+variable "max_concurrency" {
+  description = "Maximum number of concurrent requests per instance"
+  type        = number
+  default     = 100
+  
+  validation {
+    condition     = var.max_concurrency >= 1 && var.max_concurrency <= 1000
+    error_message = "Max concurrency must be between 1 and 1000."
+  }
+}
+
+variable "min_size" {
+  description = "Minimum number of instances"
+  type        = number
+  default     = 1
+  
+  validation {
+    condition     = var.min_size >= 1 && var.min_size <= 25
+    error_message = "Min size must be between 1 and 25."
+  }
+}
+
+variable "max_size" {
+  description = "Maximum number of instances"
+  type        = number
+  default     = 3
+  
+  validation {
+    condition     = var.max_size >= 1 && var.max_size <= 25
+    error_message = "Max size must be between 1 and 25."
+  }
+}
+
+# Health Check Configuration
 variable "health_check_path" {
-  description = "Health check path for the load balancer"
+  description = "Health check path"
   type        = string
   default     = "/"
 }
 
-variable "health_check_command" {
-  description = "Health check command for the container"
-  type        = string
-  default     = "curl -f http://localhost:5001/health || exit 1"
-}
-
-# Auto Scaling Configuration
-variable "enable_autoscaling" {
-  description = "Enable auto scaling for ECS service"
-  type        = bool
-  default     = false
-}
-
-variable "min_capacity" {
-  description = "Minimum number of tasks for auto scaling"
+variable "health_check_healthy_threshold" {
+  description = "Number of consecutive successful health checks"
   type        = number
   default     = 1
-}
-
-variable "max_capacity" {
-  description = "Maximum number of tasks for auto scaling"
-  type        = number
-  default     = 3
-}
-
-variable "cpu_target_value" {
-  description = "Target CPU utilization percentage for auto scaling"
-  type        = number
-  default     = 70.0
   
   validation {
-    condition     = var.cpu_target_value > 0 && var.cpu_target_value <= 100
-    error_message = "CPU target value must be between 0 and 100."
+    condition     = var.health_check_healthy_threshold >= 1 && var.health_check_healthy_threshold <= 20
+    error_message = "Health check healthy threshold must be between 1 and 20."
   }
 }
 
-# Load Balancer Configuration
-variable "enable_deletion_protection" {
-  description = "Enable deletion protection for the load balancer"
-  type        = bool
-  default     = false
-}
-
-variable "alb_access_logs_bucket" {
-  description = "S3 bucket for ALB access logs (leave empty to disable)"
-  type        = string
-  default     = ""
-}
-
-# CloudWatch Configuration
-variable "log_retention_days" {
-  description = "Number of days to retain CloudWatch logs"
+variable "health_check_unhealthy_threshold" {
+  description = "Number of consecutive failed health checks"
   type        = number
-  default     = 14
+  default     = 5
   
   validation {
-    condition = contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653], var.log_retention_days)
-    error_message = "Log retention days must be a valid CloudWatch retention value."
+    condition     = var.health_check_unhealthy_threshold >= 1 && var.health_check_unhealthy_threshold <= 20
+    error_message = "Health check unhealthy threshold must be between 1 and 20."
   }
 }
 
-# Security Configuration
-variable "enable_execute_command" {
-  description = "Enable ECS Exec for debugging (disable in production)"
-  type        = bool
-  default     = false
+variable "health_check_interval" {
+  description = "Time interval between health checks (in seconds)"
+  type        = number
+  default     = 10
+  
+  validation {
+    condition     = var.health_check_interval >= 5 && var.health_check_interval <= 20
+    error_message = "Health check interval must be between 5 and 20 seconds."
+  }
+}
+
+variable "health_check_timeout" {
+  description = "Health check timeout (in seconds)"
+  type        = number
+  default     = 2
+  
+  validation {
+    condition     = var.health_check_timeout >= 2 && var.health_check_timeout <= 20
+    error_message = "Health check timeout must be between 2 and 20 seconds."
+  }
 }
 
 # Container Configuration
@@ -211,8 +205,8 @@ variable "container_environment_variables" {
       value = "production"
     },
     {
-      name  = "FLASK_APP"
-      value = "app.py"
+      name  = "PYTHONUNBUFFERED"
+      value = "1"
     }
   ]
 }
@@ -224,24 +218,4 @@ variable "container_secrets" {
     valueFrom = string
   }))
   default = []
-}
-
-# Advanced Networking (optional)
-variable "vpc_id" {
-  description = "VPC ID to use (leave empty to use default VPC)"
-  type        = string
-  default     = ""
-}
-
-variable "subnet_ids" {
-  description = "Subnet IDs to use (leave empty to use default subnets)"
-  type        = list(string)
-  default     = []
-}
-
-# Cost Optimization
-variable "use_fargate_spot" {
-  description = "Use Fargate Spot for cost optimization (may cause interruptions)"
-  type        = bool
-  default     = false
 }
