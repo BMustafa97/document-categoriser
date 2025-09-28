@@ -98,15 +98,6 @@ def check_status(job_id):
         'message': 'File uploaded successfully. Processing will be implemented next.'
     })
 
-@app.route('/health')
-def health_check():
-    """Health check endpoint for load balancers."""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat(),
-        'version': '0.1.0'
-    })
-
 @app.errorhandler(413)
 def too_large(e):
     """Handle file too large error."""
