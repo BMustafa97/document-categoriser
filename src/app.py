@@ -32,6 +32,7 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'service': 'document-categoriser',
+        'version': '1.0.0',
         'timestamp': datetime.utcnow().isoformat()
     }), 200
 

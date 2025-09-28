@@ -48,12 +48,12 @@ jobs:
         
         echo "Listing images older than 30 days (keeping latest 10)..." >> $GITHUB_STEP_SUMMARY
         
-        # Get images older than 30 days, excluding latest 10
+        # Get all images, sort by date, exclude latest 10, then filter by date
+        THIRTY_DAYS_AGO=$(date -d '30 days ago' '+%Y-%m-%dT%H:%M:%S')
         OLD_IMAGES=$(aws ecr describe-images \
           --repository-name $REPOSITORY \
-          --query 'sort_by(imageDetails,&imagePushedAt)[:-10].imageDigest' \
-          --output text \
-          --filter "imageDetail.imagePushedAt < $(date -d '30 days ago' --iso-8601)")
+          --query "sort_by(imageDetails,&imagePushedAt)[:-10][?imagePushedAt<'$THIRTY_DAYS_AGO'].imageDigest" \
+          --output text)
         
         if [[ -z "$OLD_IMAGES" ]]; then
           echo "✅ No old images found for cleanup" >> $GITHUB_STEP_SUMMARY
